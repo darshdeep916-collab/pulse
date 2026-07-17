@@ -1,143 +1,154 @@
-import Link from "next/link";
+'use client';
 
-import { CopyButton } from "../components/CopyButton";
-import { featuredFlatpaks, featuredPwas } from "./catalogData";
+import { useState, useEffect } from 'react';
+import CopyButton from '../components/CopyButton';
+import { supabase } from '../utils/supabase';
 
-function Code({ children }: { children: string }) {
-  return (
-    <code className="rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-[13px] text-white/90">
-      {children}
-    </code>
-  );
+interface FeedItem {
+  id: string;
+  content: string;
+  created_at: string;
 }
 
-export default function Home() {
+export default function Page() {
+  const [prompt, setPrompt] = useState('');
+  const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
+
+  // Fetch network feed database entries from Supabase on load
+  useEffect(() => {
+    async function fetchFeed() {
+      try {
+        const { data, error } = await supabase
+          .from('feed') 
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (!error && data) {
+          setFeed(data);
+        }
+      } catch (err) {
+        console.error('Supabase fetch error:', err);
+      }
+    }
+    fetchFeed();
+  }, []);
+
+  // Handle the AI Terminal call
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+    setOutput('Establishing quantum uplink connection...');
+    
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        setOutput(data.text);
+      } else {
+        setOutput(`Uplink Error: ${data.error || 'Connection timed out.'}`);
+      }
+    } catch (err: any) {
+      setOutput(`System Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-[#0b0f16] text-white">
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="flex flex-col gap-3">
-          <div className="inline-flex items-center gap-2 text-xs text-white/60">
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">
-              VM-first OS
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1">
-              Web/PWA + Flatpak (+ Android later)
-            </span>
+    <div className="min-h-screen bg-black text-green-500 font-mono p-6 flex flex-col justify-between">
+      {/* Header */}
+      <header className="border-b border-green-900 pb-4 mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-widest text-green-400">PULSE NETWORK</h1>
+          <p className="text-xs text-green-600">NEURO-OS TERMINAL CONSOLE</p>
+        </div>
+        <div className="text-right">
+          <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-ping mr-2"></span>
+          <span className="text-xs text-green-400 font-bold">UPLINK STATUS: ACTIVE</span>
+        </div>
+      </header>
+
+      {/* Main Grid Workspace */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
+        {/* Left: Feed Column */}
+        <div className="md:col-span-2 border border-green-900 bg-black/40 p-4 rounded flex flex-col">
+          <h2 className="text-sm font-bold uppercase text-green-400 mb-4 border-b border-green-900 pb-2">
+            System Broadcast Feed
+          </h2>
+          <div className="flex-grow space-y-4 overflow-y-auto max-h-[400px] pr-2">
+            {feed.length === 0 ? (
+              <div className="border-l-2 border-green-900 pl-3 py-1">
+                <p className="text-xs text-green-700 italic">No network broadcasts detected. Standing by...</p>
+                <span className="text-[10px] text-green-800">00:00:00</span>
+              </div>
+            ) : (
+              feed.map((item) => (
+                <div key={item.id} className="border-l-2 border-green-700 pl-3 py-1">
+                  <p className="text-xs text-green-300">{item.content}</p>
+                  <span className="text-[10px] text-green-700">
+                    {new Date(item.created_at).toLocaleTimeString()}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            NeuroOS App Catalog (MVP)
-          </h1>
-          <p className="max-w-3xl text-sm leading-6 text-white/70">
-            The fastest path to “100 million apps” is to treat compatibility layers as
-            first-class citizens: PWAs from the open web, sandboxed Linux apps via
-            Flatpak, and (later) Android apps via a containerized compatibility layer.
-          </p>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h2 className="text-lg font-medium">Flatpak apps (Linux ecosystem)</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Flathub remote is expected. Install using:
-            </p>
-            <div className="mt-3 flex flex-col gap-2">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
-                <Code>flatpak install -y flathub &lt;appId&gt;</Code>
-                <CopyButton value="flatpak install -y flathub <appId>" label="Copy template" />
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
-                <Code>flatpak update -y</Code>
-                <CopyButton value="flatpak update -y" />
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
-                <Code>flatpak list --app</Code>
-                <CopyButton value="flatpak list --app" />
-              </div>
+        {/* Right: AI Console Column */}
+        <div className="border border-green-900 bg-black/40 p-4 rounded flex flex-col justify-between">
+          <div>
+            <h2 className="text-sm font-bold uppercase text-green-400 mb-4 border-b border-green-900 pb-2">
+              AI Terminal Assistant
+            </h2>
+            
+            {/* AI Output Terminal Screen */}
+            <div className="bg-black border border-green-950 p-3 rounded h-48 overflow-y-auto mb-4 text-xs text-green-300 relative">
+              {output || "Awaiting neural terminal instructions..."}
+              {output && (
+                <div className="absolute top-2 right-2">
+                  <CopyButton text={output} />
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="mt-5">
-              <h3 className="text-sm font-medium text-white/90">Featured</h3>
-              <ul className="mt-2 space-y-2">
-                {featuredFlatpaks.map((app) => {
-                  const installCmd = `flatpak install -y flathub ${app.appId}`;
-                  return (
-                    <li
-                      key={app.appId}
-                      className="rounded-xl border border-white/10 bg-black/20 p-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-medium">{app.name}</div>
-                          <div className="mt-1 text-xs text-white/60">
-                            {app.description}
-                          </div>
-                          <div className="mt-2 text-xs text-white/80">
-                            <Code>{app.appId}</Code>
-                          </div>
-                        </div>
-                        <CopyButton value={installCmd} label="Copy install" />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h2 className="text-lg font-medium">Web &amp; PWAs (open web)</h2>
-            <p className="mt-2 text-sm text-white/70">
-              In Chromium-based browsers, look for an “Install app” action in the
-              address bar menu after opening a site.
-            </p>
-
-            <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3 text-sm text-white/70">
-              <div className="font-medium text-white/85">Install flow</div>
-              <ol className="mt-2 list-decimal space-y-1 pl-5">
-                <li>Open the site.</li>
-                <li>Choose “Install app”.</li>
-                <li>The OS should treat the installed PWA as an app with per-origin permissions.</li>
-              </ol>
-            </div>
-
-            <div className="mt-5">
-              <h3 className="text-sm font-medium text-white/90">Featured</h3>
-              <ul className="mt-2 space-y-2">
-                {featuredPwas.map((app) => (
-                  <li
-                    key={app.url}
-                    className="rounded-xl border border-white/10 bg-black/20 p-3"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-medium">{app.name}</div>
-                        <div className="mt-1 text-xs text-white/60">
-                          {app.description}
-                        </div>
-                        <div className="mt-2 text-xs">
-                          <Link
-                            className="text-sky-300 hover:text-sky-200"
-                            href={app.url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {app.url}
-                          </Link>
-                        </div>
-                      </div>
-                      <CopyButton value={app.url} label="Copy URL" />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-6 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-white/60">
-              Android apps are a later milestone (Waydroid-style container + Wayland windowing).
-            </div>
-          </section>
+          {/* Prompt Entry & Execution */}
+          <div className="space-y-3">
+            <textarea
+              className="w-full bg-black border border-green-850 text-green-400 p-2 rounded text-xs focus:outline-none focus:border-green-400 resize-none h-20 placeholder-green-800"
+              placeholder="Enter instructions for terminal synthesis..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              disabled={loading}
+            />
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !prompt.trim()}
+              className="w-full bg-green-950 hover:bg-green-800 text-green-100 py-2 rounded text-xs font-bold uppercase tracking-wider transition disabled:opacity-50"
+            >
+              {loading ? 'Synthesizing...' : 'AI Generate 🤖'}
+            </button>
+          </div>
         </div>
       </div>
-    </main>
+
+      {/* Footer */}
+      <footer className="border-t border-green-900 mt-6 pt-4 text-center">
+        <p className="text-[10px] text-green-800">
+          SECURE DECRYPT PROTOCOL // CODENAME: PULSE // ALL RIGHTS PRIVILEGED.
+        </p>
+      </footer>
+    </div>
   );
 }
