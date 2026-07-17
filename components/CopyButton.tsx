@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "../utils/supabase";
 import { useMemo, useState } from "react";
 
 type Props = {

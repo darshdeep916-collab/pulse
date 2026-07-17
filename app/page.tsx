@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CopyButton } from "./components/CopyButton";
+import { CopyButton } from "../components/CopyButton";
 import { featuredFlatpaks, featuredPwas } from "./catalogData";
 
 function Code({ children }: { children: string }) {
