@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: neuroos-flatpak <command> [args...]
+
+Commands:
+  list                 List installed Flatpak apps
+  search <query>       Search Flathub (best-effort; may be slow)
+  install <appId>      Install an appId from Flathub
+  uninstall <appId>    Uninstall an appId
+  update               Update all installed Flatpaks
+  perms <appId>        Show effective permissions and overrides
+
+Examples:
+  neuroos-flatpak install org.mozilla.firefox
+  neuroos-flatpak perms org.mozilla.firefox
+EOF
+}
+
+cmd="${1:-}"
+shift || true
+
+case "${cmd}" in
+  list)
+    exec flatpak list --app
+    ;;
+  search)
+    q="${1:-}"
+    [[ -n "${q}" ]] || { usage; exit 2; }
+    exec flatpak remote-ls --app flathub --columns=application,name,description | grep -i -- "${q}" || true
+    ;;
+  install)
+    app="${1:-}"
+    [[ -n "${app}" ]] || { usage; exit 2; }
+    exec flatpak install -y flathub "${app}"
+    ;;
+  uninstall)
+    app="${1:-}"
+    [[ -n "${app}" ]] || { usage; exit 2; }
+    exec flatpak uninstall -y "${app}"
+    ;;
+  update)
+    exec flatpak update -y
+    ;;
+  perms)
+    app="${1:-}"
+    [[ -n "${app}" ]] || { usage; exit 2; }
+    echo "== flatpak info =="
+    flatpak info "${app}" || true
+    echo
+    echo "== flatpak override (user) =="
+    flatpak override --user --show "${app}" || true
+    echo
+    echo "== flatpak permission-show (summary) =="
+    flatpak permission-show | sed -n '1,200p' || true
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: ${cmd}" >&2
+    usage
+    exit 2
+    ;;
+esac
+

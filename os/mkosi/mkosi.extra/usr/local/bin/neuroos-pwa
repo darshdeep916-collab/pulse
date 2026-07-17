@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+slugify() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+}
+
+usage() {
+  cat <<'EOF'
+Usage: neuroos-pwa <command> [args...]
+
+Commands:
+  install <name> <url>   Create a web-app wrapper desktop entry
+  list                   List installed wrappers
+  uninstall <name>       Remove wrapper by name (slug)
+
+Notes:
+  - This is a pragmatic “web app wrapper” model using Chromium:
+      chromium --app=<url> --user-data-dir=<per-app-profile>
+  - It is not the same as a full PWA install, but it behaves like an app and
+    isolates storage per wrapper.
+EOF
+}
+
+cmd="${1:-}"
+shift || true
+
+xdg_apps_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+neuroos_dir="${XDG_DATA_HOME:-$HOME/.local/share}/neuroos/pwa"
+
+case "${cmd}" in
+  install)
+    name="${1:-}"
+    url="${2:-}"
+    [[ -n "${name}" && -n "${url}" ]] || { usage; exit 2; }
+    slug="$(slugify "${name}")"
+    mkdir -p "${xdg_apps_dir}" "${neuroos_dir}/${slug}"
+    desktop="${xdg_apps_dir}/neuroos-pwa-${slug}.desktop"
+    cat > "${desktop}" <<EOF
+[Desktop Entry]
+Type=Application
+Name=${name}
+Exec=chromium --no-first-run --disable-features=Translate --app=${url} --user-data-dir=${neuroos_dir}/${slug}
+Terminal=false
+Categories=Network;
+EOF
+    chmod 0644 "${desktop}"
+    echo "Installed wrapper:"
+    echo "  ${desktop}"
+    ;;
+  list)
+    ls -1 "${xdg_apps_dir}"/neuroos-pwa-*.desktop 2>/dev/null | sed -E 's/.*neuroos-pwa-//; s/\\.desktop$//' || true
+    ;;
+  uninstall)
+    name="${1:-}"
+    [[ -n "${name}" ]] || { usage; exit 2; }
+    slug="$(slugify "${name}")"
+    rm -f "${xdg_apps_dir}/neuroos-pwa-${slug}.desktop" || true
+    rm -rf "${neuroos_dir:?}/${slug}" || true
+    echo "Removed wrapper: ${slug}"
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: ${cmd}" >&2
+    usage
+    exit 2
+    ;;
+esac
+

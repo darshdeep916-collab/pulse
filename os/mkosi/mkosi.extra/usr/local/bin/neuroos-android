@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: neuroos-android <command>
+
+Commands:
+  doctor     Check whether the host looks ready for Waydroid-style Android
+
+Notes:
+  This image does not ship an Android container by default yet. This tool is a
+  readiness checker + placeholder for the later integration milestone.
+EOF
+}
+
+cmd="${1:-}"
+
+case "${cmd}" in
+  doctor)
+    echo "== Kernel checks =="
+    if [[ -d /dev/binderfs ]]; then
+      echo "binderfs: present"
+    else
+      echo "binderfs: missing (expected at /dev/binderfs)"
+    fi
+
+    if lsmod 2>/dev/null | grep -qE '(^|\\s)(binder|binder_linux)(\\s|$)'; then
+      echo "binder module: loaded"
+    else
+      echo "binder module: not loaded"
+    fi
+
+    echo
+    echo "== Container runtime =="
+    if command -v lxc-info >/dev/null 2>&1; then
+      echo "lxc: installed"
+    else
+      echo "lxc: not installed (expected for Waydroid)"
+    fi
+
+    echo
+    echo "== Next steps (planned) =="
+    echo "- Add waydroid + lxc packages"
+    echo "- Provision signed Android images"
+    echo "- Integrate windowing + input + audio"
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: ${cmd}" >&2
+    usage
+    exit 2
+    ;;
+esac
+

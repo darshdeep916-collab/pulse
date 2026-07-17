@@ -1,0 +1,25 @@
+* {
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+}
+
+window#waybar {
+  background: rgba(11, 15, 22, 0.92);
+  color: #e6edf3;
+  border-bottom: 1px solid #1f2a37;
+}
+
+#workspaces button {
+  padding: 0 8px;
+  color: #9aa4b2;
+}
+
+#workspaces button.focused {
+  color: #e6edf3;
+  background: rgba(125, 211, 252, 0.12);
+}
+
+#clock, #network, #pulseaudio, #battery, #tray {
+  padding: 0 10px;
+}
+

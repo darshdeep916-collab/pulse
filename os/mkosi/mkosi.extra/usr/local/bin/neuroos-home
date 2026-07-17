@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+catalog_path="/usr/share/neuroos/catalog/index.html"
+
+if command -v chromium >/dev/null 2>&1; then
+  exec chromium \
+    --no-first-run \
+    --disable-features=Translate \
+    --new-window "file://${catalog_path}"
+fi
+
+exec foot -e bash -lc 'echo "Chromium is not installed."; read -r'
+

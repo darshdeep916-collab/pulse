@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=NeuroOS Flatpak Tools
+Exec=foot -e bash -lc 'neuroos-flatpak --help; echo; echo "Try: neuroos-flatpak search <term> | install <appId> | update"; echo; read -r -p "Press Enter to exit..."'
+Terminal=false
+Categories=System;
+

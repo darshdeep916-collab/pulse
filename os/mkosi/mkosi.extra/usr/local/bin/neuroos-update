@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cat <<'EOF'
+NeuroOS updates (MVP scaffold)
+
+- System image updates:
+    For now, update by replacing the VM disk image artifact (qcow2) and using VM snapshots for rollback.
+
+- App updates:
+    Flatpak:  flatpak update
+    Web/PWA:  updated by origin/runtime
+
+- Catalog metadata:
+    In this repo, catalog/index.json is designed to be signed and verified.
+    See docs/updates.md for the model.
+EOF
+

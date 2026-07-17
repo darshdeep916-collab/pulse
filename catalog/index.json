@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-17",
+  "entries": [
+    {
+      "type": "flatpak",
+      "name": "Firefox",
+      "appId": "org.mozilla.firefox",
+      "source": "flathub"
+    },
+    {
+      "type": "flatpak",
+      "name": "GIMP",
+      "appId": "org.gimp.GIMP",
+      "source": "flathub"
+    },
+    {
+      "type": "pwa",
+      "name": "YouTube Music",
+      "url": "https://music.youtube.com/"
+    }
+  ]
+}
+

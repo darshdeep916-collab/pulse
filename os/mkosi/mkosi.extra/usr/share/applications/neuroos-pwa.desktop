@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=NeuroOS PWA Installer
+Exec=foot -e bash -lc 'echo "Example:"; echo "  neuroos-pwa install YouTubeMusic https://music.youtube.com/"; echo; read -r -p "Press Enter to open a shell..."; bash -l'
+Terminal=false
+Categories=System;
+
